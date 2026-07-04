@@ -22,6 +22,12 @@
 | --- | --- | --- |
 | <img src="images/mobile-splash.jpg" width="220"> | <img src="images/mobile-quota-dashboard.jpg" width="220"> | <img src="images/mobile-settings-redacted.jpg" width="220"> |
 
+通知和手表端：
+
+| 手机通知 | 手表界面 |
+| --- | --- |
+| <img src="images/mobile-notifications-redacted.jpg" width="320"> | <img src="images/watch-app-photo.png" width="220"> |
+
 手机桌面图标：
 
 <img src="images/phone-home-icon.jpg" width="220">

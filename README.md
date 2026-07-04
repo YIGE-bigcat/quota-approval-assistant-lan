@@ -22,7 +22,9 @@
     <td align="center"><img src="docs/images/mobile-settings-redacted.jpg" alt="手机连接设置" width="220"><br>连接与提醒设置</td>
   </tr>
   <tr>
-    <td align="center" colspan="3"><img src="docs/images/phone-home-icon.jpg" alt="手机桌面图标" width="220"><br>手机桌面图标</td>
+    <td align="center"><img src="docs/images/mobile-notifications-redacted.jpg" alt="手机通知提醒" width="260"><br>手机通知提醒</td>
+    <td align="center"><img src="docs/images/watch-app-photo.png" alt="手表端界面" width="220"><br>手表端界面</td>
+    <td align="center"><img src="docs/images/phone-home-icon.jpg" alt="手机桌面图标" width="220"><br>手机桌面图标</td>
   </tr>
 </table>
 
