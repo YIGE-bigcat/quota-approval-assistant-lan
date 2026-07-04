@@ -1,0 +1,13 @@
+{
+  "port": 8787,
+  "bind": "0.0.0.0",
+  "publicBaseUrl": "",
+  "bridgeToken": "replace-with-a-random-secret",
+  "internalSecret": "replace-with-a-different-random-secret",
+  "approvalTimeoutSeconds": 300,
+  "ntfy": {
+    "enabled": true,
+    "baseUrl": "https://ntfy.sh",
+    "topic": "replace-with-a-private-random-topic"
+  }
+}

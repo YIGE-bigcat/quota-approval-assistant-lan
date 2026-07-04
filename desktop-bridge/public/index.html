@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#07100e">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/style.css?v=10">
+    <title>Codex 审批助手</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">LIVE BRIDGE</p>
+          <h1>Codex 审批</h1>
+        </div>
+        <div class="top-actions">
+          <button class="install-app" id="install-app" type="button" hidden>安装</button>
+          <div class="status-dot" id="connection" title="连接状态"></div>
+        </div>
+      </header>
+
+      <section class="hero-card">
+        <div class="quota-copy">
+          <p class="label">额度概览</p>
+          <h2 id="quota-state">读取中</h2>
+          <p id="quota-updated">等待 Codex 返回最新额度数据</p>
+        </div>
+        <div class="quota-pair">
+          <article class="quota-card quota-card-short" id="short-card">
+            <div class="quota-card-head">
+              <span>5 小时额度</span>
+            </div>
+            <div class="quota-value" id="short-remaining"><b>--</b><em>剩余</em></div>
+            <div class="battery battery-short" aria-hidden="true">
+              <div class="battery-glass">
+                <div class="battery-liquid"><i></i></div>
+              </div>
+              <div class="battery-tip"></div>
+            </div>
+            <div class="quota-reset" id="short-reset">--</div>
+          </article>
+          <article class="quota-card quota-card-weekly" id="weekly-card">
+            <div class="quota-card-head">
+              <span>本周额度</span>
+            </div>
+            <div class="quota-value" id="weekly-remaining"><b>--</b><em>剩余</em></div>
+            <div class="battery battery-weekly" aria-hidden="true">
+              <div class="battery-glass">
+                <div class="battery-liquid"><i></i></div>
+              </div>
+              <div class="battery-tip"></div>
+            </div>
+            <div class="quota-reset" id="weekly-reset">--</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ACTION REQUIRED</p>
+            <h2>权限审核</h2>
+          </div>
+          <span class="count" id="approval-count">0</span>
+        </div>
+        <div id="approvals" class="stack empty-state">暂无待审核请求</div>
+      </section>
+
+      <section class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">RECENT</p>
+            <h2>审批历史</h2>
+          </div>
+          <button class="refresh" id="refresh" type="button">刷新</button>
+        </div>
+        <div id="events" class="timeline empty-state">暂无审批历史</div>
+      </section>
+    </main>
+    <template id="approval-template">
+      <article class="approval-card">
+        <div class="approval-head">
+          <span class="tool-name"></span>
+          <span class="expires"></span>
+        </div>
+        <p class="reason"></p>
+        <code class="target"></code>
+        <p class="weekly-quota"></p>
+        <div class="actions">
+          <button class="deny" type="button">拒绝</button>
+          <button class="allow" type="button">批准</button>
+        </div>
+      </article>
+    </template>
+    <script type="module" src="/app.js?v=10"></script>
+  </body>
+</html>

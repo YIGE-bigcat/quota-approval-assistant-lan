@@ -1,0 +1,32 @@
+# Local runtime config and data
+desktop-bridge/config.local.json
+desktop-bridge/data/
+*.log
+
+# Node / test output
+node_modules/
+coverage/
+
+# Android build output and local SDK paths
+android-app/.gradle/
+android-app/**/build/
+android-app/local.properties
+
+# DevEco / HarmonyOS build output and local IDE state
+watch-wearable-app/.hvigor/
+watch-wearable-app/.idea/
+watch-wearable-app/**/build/
+watch-wearable-app/local.properties
+
+# Signing material. Users must generate their own certificates/profiles.
+*.p12
+*.cer
+*.p7b
+*.csr
+*.keystore
+*.jks
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.tmp

@@ -1,0 +1,10 @@
+{
+  "modelVersion": "5.0.0",
+  "name": "codex-approval-watch",
+  "version": "1.0.0",
+  "description": "Codex approval assistant for Huawei wearable devices",
+  "main": "",
+  "author": "Codex",
+  "license": "MIT",
+  "dependencies": {}
+}

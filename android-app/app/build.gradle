@@ -1,0 +1,20 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.codexbridge.approval"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.codexbridge.approval"
+        minSdk 23
+        targetSdk 35
+        versionCode 9
+        versionName "2.7.0"
+    }
+}
+
+dependencies {
+    implementation "com.google.zxing:core:3.5.3"
+}

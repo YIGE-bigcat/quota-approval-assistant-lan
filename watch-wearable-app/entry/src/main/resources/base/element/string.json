@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "审批助手"
+    },
+    {
+      "name": "module_desc",
+      "value": "Codex approval assistant watch module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Codex approval assistant"
+    }
+  ]
+}
