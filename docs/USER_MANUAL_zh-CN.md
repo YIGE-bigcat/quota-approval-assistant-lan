@@ -10,7 +10,25 @@
 
 当前仓库里的手表工程是 HarmonyOS `wearable` 智能穿戴版，不是 LiteWearable 版。
 
-## 2. 电脑端配置
+## 2. 界面预览
+
+电脑端 Dashboard：
+
+![电脑端网页 Dashboard](images/desktop-dashboard.png)
+
+手机端：
+
+| 启动画面 | 额度面板 | 连接设置 |
+| --- | --- | --- |
+| <img src="images/mobile-splash.jpg" width="220"> | <img src="images/mobile-quota-dashboard.jpg" width="220"> | <img src="images/mobile-settings-redacted.jpg" width="220"> |
+
+手机桌面图标：
+
+<img src="images/phone-home-icon.jpg" width="220">
+
+说明：设置页截图已经脱敏，真实使用时需要填写自己的电脑局域网地址和 token。
+
+## 3. 电脑端配置
 
 进入电脑端目录：
 
@@ -39,7 +57,7 @@ http://192.168.1.100:8788
 - Windows 防火墙是否允许 Node.js / 8788 端口。
 - 电脑 IP 是否变化。
 
-## 3. 手机端安装和使用
+## 4. 手机端安装和使用
 
 安装包：
 
@@ -64,7 +82,7 @@ release/phone-android-debug.apk
 - 电脑断开时显示 App 内的连接失败页面。
 - 给手表端提供 `8790` 中继服务。
 
-## 4. 手表端安装和使用
+## 5. 手表端安装和使用
 
 手表源码目录：
 
@@ -102,7 +120,7 @@ export const BRIDGE_TOKEN: string = '你的电脑端token';
 
 注意：`release/watch-wearable-unsigned.hap` 是未签名公开包，不能直接安装到真机。真机安装需要你自己的签名 profile。
 
-## 5. 日常使用流程
+## 6. 日常使用流程
 
 1. 电脑启动 `desktop-bridge`。
 2. 手机 App 连接电脑 Bridge。
@@ -111,7 +129,7 @@ export const BRIDGE_TOKEN: string = '你的电脑端token';
 5. Codex 发起权限审批时，手机和网页会显示同一条审批。
 6. 任意一端批准或拒绝后，其他端会刷新到历史记录，不再显示为待审批。
 
-## 6. 常见问题
+## 7. 常见问题
 
 ### 手机提示连接失败
 

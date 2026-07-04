@@ -7,6 +7,25 @@
 - `watch-wearable-app/`：DevEco Studio 智能穿戴 `wearable` 版手表 App，非 LiteWearable 版。
 - `release/`：当前构建出的安装包和源码压缩包。
 
+## 界面预览
+
+以下截图已做公开发布处理，设置页中的 token 和局域网地址使用示例占位符。
+
+<p align="center">
+  <img src="docs/images/desktop-dashboard.png" alt="电脑端网页 Dashboard" width="780">
+</p>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/mobile-splash.jpg" alt="手机启动页" width="220"><br>手机启动页</td>
+    <td align="center"><img src="docs/images/mobile-quota-dashboard.jpg" alt="手机额度面板" width="220"><br>额度面板</td>
+    <td align="center"><img src="docs/images/mobile-settings-redacted.jpg" alt="手机连接设置" width="220"><br>连接与提醒设置</td>
+  </tr>
+  <tr>
+    <td align="center" colspan="3"><img src="docs/images/phone-home-icon.jpg" alt="手机桌面图标" width="220"><br>手机桌面图标</td>
+  </tr>
+</table>
+
 ## 当前版本状态
 
 - 手机 APK：`release/phone-android-debug.apk`，公开配置版，默认 token 为 `CHANGE_ME`，安装后需要在 App 里填写自己的电脑地址和 token。
