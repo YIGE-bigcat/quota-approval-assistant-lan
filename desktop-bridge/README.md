@@ -1,12 +1,13 @@
-# Codex Watch Bridge for HUAWEI WATCH GT 5 Pro
+# Codex 额度审批 Bridge（含 Windows 桌面额度小工具）
 
 中文安装和使用步骤请阅读：[`华为手表GT5Pro安装使用说明.md`](./华为手表GT5Pro安装使用说明.md)
 
-This local bridge provides three functions:
+This local bridge provides four functions:
 
 1. Sends Codex task-complete and permission-review notifications to an Android phone through `ntfy`; Huawei Health can mirror those notifications to WATCH GT 5 Pro.
 2. Reads the latest real `codex.rate_limits` event from Codex Desktop's local log database and shows remaining percentages for the 5-hour and 7-day windows.
 3. Lets a permission request wait for an allow/deny decision. `ntfy` notification actions and the mobile dashboard both return that decision to the Codex `PermissionRequest` hook.
+4. Provides a native Windows desktop quota widget. Open the Dashboard locally, click `悬浮窗`, then enable it to keep the 5-hour and weekly quota, reset time, and pending approval count on screen without a browser title or address bar.
 
 ## Requirements
 
@@ -30,6 +31,14 @@ This local bridge provides three functions:
 5. Open the dashboard URL printed by `start.ps1` on the phone. Add it to the home screen if desired.
 
 The installer backs up `~/.codex/config.toml` and `~/.codex/hooks.json`. It preserves the previous `notify` command through `notify-dispatcher.mjs`.
+
+## Windows desktop widget
+
+- `scripts/QuotaFloatingWindow.exe` is the ready-to-run native widget used by the Dashboard.
+- It only polls `127.0.0.1` and reads the local Bridge configuration; it never displays the access token.
+- Use the Dashboard `悬浮窗` settings to show/hide either quota window and select a compact layout.
+- Drag the widget with the left mouse button. Click `×` to close it.
+- To rebuild after changing the source, run `./scripts/build-floating-window.ps1`. The script closes a running widget first.
 
 ## Watch behavior
 

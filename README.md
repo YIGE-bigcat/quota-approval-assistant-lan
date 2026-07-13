@@ -1,6 +1,6 @@
-# 额度审批助手（局域网版）
+# 额度审批助手（局域网版，含 Windows 桌面额度小工具）
 
-一个用于 Codex 权限审批和额度查看的局域网三端方案：
+一款带有 Windows 桌面额度小工具的 Codex 权限审批与额度查看助手。它通过局域网把电脑、手机和智能穿戴设备连接起来；桌面小工具可在网页 Dashboard 中一键开启，持续显示 5 小时与本周剩余额度、刷新时间和待审批数量，不显示浏览器地址栏。
 
 - `desktop-bridge/`：运行在电脑上的本地 Bridge 和网页 Dashboard。
 - `android-app/`：运行在手机上的 Android App，支持审批、额度查看、后台提醒、手机到手表中继。
@@ -13,6 +13,11 @@
 
 <p align="center">
   <img src="docs/images/desktop-dashboard.png" alt="电脑端网页 Dashboard" width="780">
+</p>
+
+<p align="center">
+  <img src="docs/images/desktop-widget.png" alt="Windows 原生桌面额度小工具" width="560"><br>
+  <em>Windows 原生桌面额度小工具：可拖动、置顶显示、每 5 秒同步。</em>
 </p>
 
 <table>
@@ -32,7 +37,8 @@
 
 - 手机 APK：`release/phone-android-debug.apk`，公开配置版，默认 token 为 `CHANGE_ME`，安装后需要在 App 里填写自己的电脑地址和 token。
 - 手表 HAP：`release/watch-wearable-unsigned.hap`，公开配置版，未签名。真机安装前需要在 DevEco Studio 中配置自己的调试签名并重新构建签名包。
-- 电脑端：源码包 `release/desktop-bridge-source.zip`，也可以直接使用 `desktop-bridge/` 目录运行。
+- 电脑端：源码包 `release/desktop-bridge-source.zip`，也可以直接使用 `desktop-bridge/` 目录运行。Windows 版内含原生桌面额度小工具 `scripts/QuotaFloatingWindow.exe`。
+- 桌面小工具：`release/windows-desktop-widget.exe`，由 Dashboard 在本机一键启停；源代码在 `desktop-bridge/scripts/QuotaFloatingWindow.cs`。
 
 ## 适用场景
 
@@ -60,10 +66,11 @@ node --check src/server.mjs
 ```
 
 4. 记下电脑端显示的 Dashboard 地址和 token。
-5. 手机上安装 `release/phone-android-debug.apk`。
-6. 打开手机 App，填写电脑局域网地址，例如 `http://192.168.1.100:8788`，并填写电脑端 token。
-7. 在手机 App 里打开后台提醒权限。
-8. 如需手表端，打开 `watch-wearable-app/entry/src/main/ets/common/BridgeConfig.ets`，把地址和 token 改成手机中继地址或电脑 Bridge 地址，再用 DevEco Studio 配置签名并构建 HAP。
+5. 在电脑 Dashboard 右上角点击“悬浮窗”，开启“Windows 原生无边框悬浮窗”。可选择显示 5 小时额度、本周额度和紧凑布局；窗口可以直接拖动，点击右上角 `×` 关闭。
+6. 手机上安装 `release/phone-android-debug.apk`。
+7. 打开手机 App，填写电脑局域网地址，例如 `http://192.168.1.100:8788`，并填写电脑端 token。
+8. 在手机 App 里打开后台提醒权限。
+9. 如需手表端，打开 `watch-wearable-app/entry/src/main/ets/common/BridgeConfig.ets`，把地址和 token 改成手机中继地址或电脑 Bridge 地址，再用 DevEco Studio 配置签名并构建 HAP。
 
 更完整步骤见 [docs/USER_MANUAL_zh-CN.md](docs/USER_MANUAL_zh-CN.md)。
 

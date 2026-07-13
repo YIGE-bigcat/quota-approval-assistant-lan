@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#07100e">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/style.css?v=10">
+    <link rel="stylesheet" href="/style.css?v=12">
     <title>Codex 审批助手</title>
   </head>
   <body>
@@ -17,6 +17,7 @@
           <h1>Codex 审批</h1>
         </div>
         <div class="top-actions">
+          <button class="floating-trigger" id="floating-settings" type="button">悬浮窗</button>
           <button class="install-app" id="install-app" type="button" hidden>安装</button>
           <div class="status-dot" id="connection" title="连接状态"></div>
         </div>
@@ -80,6 +81,41 @@
         <div id="events" class="timeline empty-state">暂无审批历史</div>
       </section>
     </main>
+    <dialog class="floating-dialog" id="floating-dialog" aria-labelledby="floating-dialog-title">
+      <form method="dialog" class="floating-dialog-card">
+        <div class="floating-dialog-head">
+          <div>
+            <p class="eyebrow">DESKTOP WIDGET</p>
+            <h2 id="floating-dialog-title">额度悬浮窗</h2>
+          </div>
+          <button class="dialog-close" id="floating-close" type="submit" aria-label="关闭设置">×</button>
+        </div>
+        <p class="floating-dialog-copy">在桌面最上层显示当前额度。Windows 电脑会使用无边框沉浸式小工具，其余环境自动使用浏览器兼容模式。</p>
+        <p class="floating-support" id="floating-support"></p>
+        <div class="setting-list">
+          <label class="setting-row setting-row-primary" for="floating-enabled">
+            <span><strong>开启桌面悬浮窗</strong><small>显示独立的置顶额度小窗</small></span>
+            <input id="floating-enabled" type="checkbox" role="switch">
+          </label>
+          <label class="setting-row" for="floating-short">
+            <span><strong>显示 5 小时额度</strong><small>短期剩余额度</small></span>
+            <input id="floating-short" type="checkbox" role="switch">
+          </label>
+          <label class="setting-row" for="floating-weekly">
+            <span><strong>显示本周额度</strong><small>7 天滚动窗口剩余额度</small></span>
+            <input id="floating-weekly" type="checkbox" role="switch">
+          </label>
+          <label class="setting-row setting-select" for="floating-density">
+            <span><strong>悬浮窗布局</strong><small>紧凑模式更适合屏幕边角</small></span>
+            <select id="floating-density">
+              <option value="comfortable">标准</option>
+              <option value="compact">紧凑</option>
+            </select>
+          </label>
+        </div>
+        <p class="floating-tip">悬浮窗可以拖到屏幕任何位置，原生窗口右上角可直接关闭。</p>
+      </form>
+    </dialog>
     <template id="approval-template">
       <article class="approval-card">
         <div class="approval-head">
@@ -95,6 +131,6 @@
         </div>
       </article>
     </template>
-    <script type="module" src="/app.js?v=10"></script>
+    <script type="module" src="/app.js?v=12"></script>
   </body>
 </html>

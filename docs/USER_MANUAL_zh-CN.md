@@ -1,10 +1,11 @@
-# 额度审批助手（局域网版）使用说明
+# 额度审批助手（局域网版，含 Windows 桌面额度小工具）使用说明
 
 ## 1. 这个应用做什么
 
 它把 Codex 的权限审批和额度信息同步到手机和智能穿戴设备：
 
 - 电脑端负责接收 Codex 权限请求、读取额度、提供网页 Dashboard。
+- Windows 桌面额度小工具从 Dashboard 一键启动，置顶显示 5 小时和本周额度、刷新时间与待审批数量。
 - 手机端负责审批、查看额度、接收系统通知，并给手表端提供中继。
 - 手表端负责查看额度、查看通知、批准或拒绝审批。
 
@@ -15,6 +16,10 @@
 电脑端 Dashboard：
 
 ![电脑端网页 Dashboard](images/desktop-dashboard.png)
+
+Windows 桌面额度小工具：
+
+![Windows 原生桌面额度小工具](images/desktop-widget.png)
 
 手机端：
 
@@ -50,6 +55,21 @@ node --check src/server.mjs
 - 电脑局域网 IP，例如 `192.168.1.100`。
 - Bridge 端口，默认是 `8788`。
 - Dashboard token。
+
+### 3.1 使用桌面额度小工具
+
+Windows 电脑可在 Dashboard 右上角点“悬浮窗”，打开原生无边框桌面额度小工具：
+
+- 实时显示 5 小时额度、本周额度、刷新时间与待审批数量。
+- 每 5 秒向本机 Bridge 同步一次；它不会把 token 显示在窗口中。
+- 在设置中可选择显示一个或两个额度窗口，也可切换紧凑布局。
+- 鼠标左键拖动窗口可移动位置，右上角 `×` 可关闭。
+
+源代码和已构建程序位于 `desktop-bridge/scripts/`。如需重新构建，先关闭小工具，再运行：
+
+```powershell
+.\scripts\build-floating-window.ps1
+```
 
 手机和手表必须能访问电脑地址，例如：
 

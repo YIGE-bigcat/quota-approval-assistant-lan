@@ -8,9 +8,103 @@ const elements = Object.fromEntries([
   "short-remaining", "short-reset",
   "weekly-remaining", "weekly-reset",
   "approval-count", "approvals", "events", "refresh", "install-app",
+  "floating-settings", "floating-dialog", "floating-close", "floating-support",
+  "floating-enabled", "floating-short", "floating-weekly", "floating-density",
 ].map((id) => [id, document.getElementById(id)]));
 
 let installPrompt = null;
+let floatingWindow = null;
+let latestStatus = null;
+let latestQuotaDisplay = null;
+let nativeWidgetAvailable = false;
+let nativeWidgetRunning = false;
+
+const FLOATING_CONFIG_KEY = "codex-approval-floating-config";
+const defaultFloatingConfig = {
+  enabled: false,
+  showShort: true,
+  showWeekly: true,
+  density: "comfortable",
+};
+
+function readFloatingConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(FLOATING_CONFIG_KEY));
+    return {
+      ...defaultFloatingConfig,
+      ...(saved && typeof saved === "object" ? saved : {}),
+      density: saved?.density === "compact" ? "compact" : "comfortable",
+    };
+  } catch {
+    return { ...defaultFloatingConfig };
+  }
+}
+
+let floatingConfig = readFloatingConfig();
+
+function saveFloatingConfig(next) {
+  floatingConfig = { ...floatingConfig, ...next };
+  localStorage.setItem(FLOATING_CONFIG_KEY, JSON.stringify(floatingConfig));
+  syncFloatingControls();
+  renderFloating();
+}
+
+function floatingSupported() {
+  return nativeWidgetAvailable || "documentPictureInPicture" in window;
+}
+
+function desktopWidgetEndpoint() {
+  return `/api/desktop-widget?token=${encodeURIComponent(token)}`;
+}
+
+async function refreshNativeWidgetState() {
+  if (!token || !["127.0.0.1", "localhost", "::1"].includes(location.hostname)) return;
+  try {
+    const response = await fetch(desktopWidgetEndpoint(), { cache: "no-store" });
+    if (!response.ok) return;
+    const state = await response.json();
+    nativeWidgetAvailable = state.available === true;
+    nativeWidgetRunning = state.running === true;
+  } catch {
+    nativeWidgetAvailable = false;
+    nativeWidgetRunning = false;
+  }
+}
+
+async function setNativeWidgetRunning(enabled) {
+  const response = await fetch(desktopWidgetEndpoint(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: enabled ? "start" : "stop",
+      showShort: floatingConfig.showShort,
+      showWeekly: floatingConfig.showWeekly,
+      density: floatingConfig.density,
+    }),
+  });
+  if (!response.ok) throw new Error("桌面悬浮窗控制失败");
+  const state = await response.json();
+  nativeWidgetAvailable = state.available === true;
+  nativeWidgetRunning = state.running === true;
+}
+
+function syncFloatingControls() {
+  const supported = floatingSupported();
+  elements["floating-enabled"].checked = floatingConfig.enabled;
+  elements["floating-short"].checked = floatingConfig.showShort;
+  elements["floating-weekly"].checked = floatingConfig.showWeekly;
+  elements["floating-density"].value = floatingConfig.density;
+  elements["floating-enabled"].disabled = !supported;
+  elements["floating-short"].disabled = !supported;
+  elements["floating-weekly"].disabled = !supported;
+  elements["floating-density"].disabled = !supported;
+  elements["floating-support"].className = `floating-support ${supported ? "is-ready" : "is-unavailable"}`;
+  elements["floating-support"].textContent = nativeWidgetAvailable
+    ? "Windows 原生无边框悬浮窗已就绪，不显示网址或浏览器标题栏。"
+    : supported
+      ? "当前浏览器支持置顶悬浮窗，可在开启后直接拖动到屏幕边角。"
+      : "当前浏览器不支持置顶悬浮窗。请在 Windows 版 Edge 或 Chrome 中，从本机地址打开应用。";
+}
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -101,6 +195,120 @@ function updatedText(quotaDisplay) {
   return `上次更新 ${relativeTime(quotaDisplay.capturedAt)}`;
 }
 
+function floatingWindowText(window) {
+  if (!window) return { value: "--", reset: "暂无额度数据", tone: "empty" };
+  return {
+    value: percent(window.remainingPercent),
+    reset: resetText(window),
+    tone: quotaTone(window.remainingPercent),
+  };
+}
+
+function renderFloatingItem(key, window) {
+  if (!floatingWindow || floatingWindow.closed) return;
+  const doc = floatingWindow.document;
+  const item = doc.querySelector(`[data-floating-window="${key}"]`);
+  if (!item) return;
+  const visible = key === "short" ? floatingConfig.showShort : floatingConfig.showWeekly;
+  doc.querySelector(".floating-quota-grid").dataset.single = String(!(floatingConfig.showShort && floatingConfig.showWeekly));
+  item.hidden = !visible;
+  if (!visible) return;
+  const display = floatingWindowText(window);
+  item.dataset.tone = display.tone;
+  const remaining = Number.isFinite(window?.remainingPercent) ? window.remainingPercent : 0;
+  item.style.setProperty("--level", `${Math.max(0, Math.min(100, remaining))}%`);
+  item.querySelector("strong").textContent = display.value;
+  item.querySelector("small").textContent = display.reset;
+}
+
+function renderFloating() {
+  if (!floatingWindow || floatingWindow.closed) return;
+  const doc = floatingWindow.document;
+  const quotaDisplay = latestQuotaDisplay;
+  const connected = Boolean(latestStatus);
+  doc.querySelector("[data-floating-connection]").textContent = connected ? "已连接" : "等待连接";
+  doc.querySelector("[data-floating-connection]").dataset.state = connected ? "online" : "offline";
+  const pending = latestStatus?.approvals?.filter((approval) => approval.status === "pending").length ?? 0;
+  doc.querySelector("[data-floating-pending]").textContent = pending ? `${pending} 条待审批` : "暂无待审批";
+  doc.querySelector("[data-floating-updated]").textContent = quotaDisplay?.available
+    ? updatedText(quotaDisplay)
+    : "等待额度数据";
+  doc.querySelector(".floating-shell").dataset.density = floatingConfig.density;
+  renderFloatingItem("short", quotaDisplay?.available ? quotaDisplay.shortTerm : null);
+  renderFloatingItem("weekly", quotaDisplay?.available ? quotaDisplay.weekly : null);
+}
+
+async function openFloatingWindow() {
+  if (!floatingSupported()) throw new Error("当前浏览器不支持置顶悬浮窗");
+  if (floatingWindow && !floatingWindow.closed) {
+    floatingWindow.focus();
+    return;
+  }
+
+  const size = floatingConfig.density === "compact"
+    ? { width: 300, height: 184 }
+    : { width: 350, height: 214 };
+  const pip = await window.documentPictureInPicture.requestWindow(size);
+  floatingWindow = pip;
+  pip.document.head.innerHTML = [
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<link rel="stylesheet" href="/floating.css?v=11">',
+    '<title>Codex 额度</title>',
+  ].join("");
+  pip.document.body.innerHTML = `
+    <main class="floating-shell" aria-live="polite">
+      <header class="floating-head">
+        <div><p>CODEX BRIDGE</p><strong>额度概览</strong></div>
+        <div class="floating-actions"><span class="floating-connection" data-floating-connection>等待连接</span><button type="button" aria-label="关闭悬浮窗" data-floating-close>×</button></div>
+      </header>
+      <section class="floating-quota-grid">
+        <article class="floating-quota-card" data-floating-window="short"><span>5 小时</span><strong>--</strong><div class="floating-meter"><i></i></div><small>暂无额度数据</small></article>
+        <article class="floating-quota-card" data-floating-window="weekly"><span>本周</span><strong>--</strong><div class="floating-meter"><i></i></div><small>暂无额度数据</small></article>
+      </section>
+      <footer class="floating-foot"><span data-floating-pending>暂无待审批</span><span data-floating-updated>等待额度数据</span></footer>
+    </main>`;
+  pip.document.querySelector("[data-floating-close]").addEventListener("click", () => pip.close());
+  pip.addEventListener("pagehide", () => {
+    if (floatingWindow !== pip) return;
+    floatingWindow = null;
+    if (floatingConfig.enabled) saveFloatingConfig({ enabled: false });
+  }, { once: true });
+  renderFloating();
+}
+
+async function setFloatingEnabled(enabled) {
+  if (nativeWidgetAvailable) {
+    try {
+      await setNativeWidgetRunning(enabled);
+      saveFloatingConfig({ enabled });
+      toast(enabled ? "沉浸式桌面悬浮窗已开启" : "桌面悬浮窗已关闭");
+    } catch (error) {
+      syncFloatingControls();
+      toast(error.message || "桌面悬浮窗控制失败");
+    }
+    return;
+  }
+  if (!enabled) {
+    saveFloatingConfig({ enabled: false });
+    floatingWindow?.close();
+    return;
+  }
+  saveFloatingConfig({ enabled: true });
+  try {
+    await openFloatingWindow();
+    toast("额度悬浮窗已开启");
+  } catch (error) {
+    saveFloatingConfig({ enabled: false });
+    toast(error.message || "悬浮窗开启失败");
+  }
+}
+
+function syncNativeWidgetSettings() {
+  if (!nativeWidgetAvailable || !floatingConfig.enabled || !nativeWidgetRunning) return;
+  setNativeWidgetRunning(true).catch(() => {});
+}
+
 function setWindow(prefix, window) {
   const card = elements[`${prefix}-card`];
   const remaining = window?.remainingPercent;
@@ -163,6 +371,7 @@ function renderQuota(quota, quotaDisplay = fallbackQuotaDisplay(quota)) {
     elements["quota-updated"].textContent = quotaDisplay.stale
       ? `${updatedText(quotaDisplay)}，请运行一次 Codex 任务刷新`
       : "运行一次 Codex 任务后自动更新";
+    renderFloating();
     return;
   }
 
@@ -172,6 +381,7 @@ function renderQuota(quota, quotaDisplay = fallbackQuotaDisplay(quota)) {
     `套餐 ${quotaDisplay.planType ?? "--"}`,
     "数据来自 Codex 实时响应",
   ].join(" · ");
+  renderFloating();
 }
 
 async function decide(id, decision) {
@@ -270,12 +480,23 @@ async function refresh(options = {}) {
     const status = await response.json();
     elements.connection.className = "status-dot online";
     const quotaDisplay = status.quotaDisplay ?? fallbackQuotaDisplay(status.quota);
+    latestStatus = status;
+    latestQuotaDisplay = quotaDisplay;
+    await refreshNativeWidgetState();
+    if (nativeWidgetRunning !== floatingConfig.enabled) {
+      floatingConfig = { ...floatingConfig, enabled: nativeWidgetRunning };
+      localStorage.setItem(FLOATING_CONFIG_KEY, JSON.stringify(floatingConfig));
+    }
+    syncFloatingControls();
     renderQuota(status.quota, quotaDisplay);
     renderApprovals(status.approvals, quotaDisplay);
     renderRecentApprovals(status.approvals);
     if (manual) toast("已刷新");
   } catch {
+    latestStatus = null;
+    latestQuotaDisplay = null;
     elements.connection.className = "status-dot offline";
+    renderFloating();
     if (manual) toast("连接失败，请检查电脑端");
   } finally {
     if (manual) {
@@ -286,5 +507,42 @@ async function refresh(options = {}) {
 }
 
 elements.refresh.addEventListener("click", () => refresh({ manual: true }));
+elements["floating-settings"].addEventListener("click", () => {
+  syncFloatingControls();
+  elements["floating-dialog"].showModal();
+});
+elements["floating-enabled"].addEventListener("change", (event) => {
+  setFloatingEnabled(event.target.checked);
+});
+elements["floating-short"].addEventListener("change", (event) => {
+  const showShort = event.target.checked;
+  if (!showShort && !floatingConfig.showWeekly) {
+    saveFloatingConfig({ showShort, showWeekly: true });
+    toast("悬浮窗至少显示一项额度");
+    return;
+  }
+  saveFloatingConfig({ showShort });
+  syncNativeWidgetSettings();
+});
+elements["floating-weekly"].addEventListener("change", (event) => {
+  const showWeekly = event.target.checked;
+  if (!showWeekly && !floatingConfig.showShort) {
+    saveFloatingConfig({ showShort: true, showWeekly });
+    toast("悬浮窗至少显示一项额度");
+    return;
+  }
+  saveFloatingConfig({ showWeekly });
+  syncNativeWidgetSettings();
+});
+elements["floating-density"].addEventListener("change", (event) => {
+  saveFloatingConfig({ density: event.target.value });
+  if (nativeWidgetAvailable && floatingConfig.enabled) {
+    syncNativeWidgetSettings();
+    toast("悬浮窗布局已更新");
+  } else if (floatingWindow && !floatingWindow.closed) {
+    toast("布局会在下次打开悬浮窗时调整窗口尺寸");
+  }
+});
+syncFloatingControls();
 await refresh();
 setInterval(() => refresh(), 5_000);

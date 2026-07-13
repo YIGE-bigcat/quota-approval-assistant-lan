@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { access, appendFile, readFile, unlink, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { networkInterfaces } from "node:os";
 import path from "node:path";
@@ -13,6 +14,10 @@ import { buildWatchStatusPayload } from "./watchPayload.mjs";
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.dirname(sourceDirectory);
 const publicDirectory = path.join(projectDirectory, "public");
+const desktopWidgetSettingsPath = path.join(projectDirectory, "data", "desktop-widget.json");
+const desktopWidgetPidPath = path.join(projectDirectory, "data", "desktop-widget.pid");
+const desktopWidgetExePath = path.join(projectDirectory, "scripts", "QuotaFloatingWindow.exe");
+const desktopWidgetLogPath = path.join(projectDirectory, "data", "desktop-widget.err.log");
 const configPath = process.env.CODEX_WATCH_CONFIG ?? path.join(projectDirectory, "config.local.json");
 const codexHome = process.env.CODEX_HOME ?? path.join(process.env.USERPROFILE ?? "", ".codex");
 const quotaDatabasePaths = [
@@ -102,6 +107,52 @@ function isInternal(request) {
   return request.headers["x-bridge-secret"] === config.internalSecret;
 }
 
+function isLoopbackRequest(request) {
+  return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(request.socket.remoteAddress);
+}
+
+async function desktopWidgetPid() {
+  try {
+    const pid = Number.parseInt((await readFile(desktopWidgetPidPath, "utf8")).trim(), 10);
+    if (!Number.isInteger(pid) || pid <= 0) throw new Error("invalid pid");
+    process.kill(pid, 0);
+    return pid;
+  } catch {
+    await unlink(desktopWidgetPidPath).catch(() => {});
+    return null;
+  }
+}
+
+async function startDesktopWidget(settings) {
+  if (process.platform !== "win32") throw new Error("desktop widget is only available on Windows");
+  const widgetSettings = {
+    showShort: settings.showShort !== false,
+    showWeekly: settings.showWeekly !== false,
+    density: settings.density === "compact" ? "compact" : "comfortable",
+  };
+  await writeFile(desktopWidgetSettingsPath, `${JSON.stringify(widgetSettings)}\n`);
+  if (await desktopWidgetPid()) return true;
+  await access(desktopWidgetExePath);
+  await writeFile(desktopWidgetLogPath, "");
+  const launcher = spawn(desktopWidgetExePath, [], {
+    cwd: projectDirectory,
+    detached: true,
+    stdio: ["ignore", "ignore", "pipe"],
+    windowsHide: false,
+  });
+  launcher.stderr?.on("data", (chunk) => appendFile(desktopWidgetLogPath, chunk).catch(() => {}));
+  launcher.unref();
+  return true;
+}
+
+async function stopDesktopWidget() {
+  const pid = await desktopWidgetPid();
+  if (!pid) return false;
+  process.kill(pid);
+  await unlink(desktopWidgetPidPath).catch(() => {});
+  return true;
+}
+
 function safeToolInput(input) {
   if (!input || typeof input !== "object") return "";
   const candidate = input.command ?? input.path ?? input.file_path ?? input.url ?? input.query;
@@ -148,6 +199,7 @@ async function serveStatic(response, pathname) {
     "/": ["index.html", "text/html; charset=utf-8"],
     "/app.js": ["app.js", "text/javascript; charset=utf-8"],
     "/style.css": ["style.css", "text/css; charset=utf-8"],
+    "/floating.css": ["floating.css", "text/css; charset=utf-8"],
     "/manifest.webmanifest": ["manifest.webmanifest", "application/manifest+json"],
     "/icon.svg": ["icon.svg", "image/svg+xml"],
     "/sw.js": ["sw.js", "text/javascript; charset=utf-8"],
@@ -178,6 +230,28 @@ const server = createServer(async (request, response) => {
         events: store.listEvents(),
         serverTime: Date.now(),
       });
+    }
+
+    if (url.pathname === "/api/desktop-widget") {
+      if (!isAuthorized(request, url)) return json(response, 401, { error: "unauthorized" });
+      if (!isLoopbackRequest(request)) return json(response, 403, { error: "desktop widget must be controlled locally" });
+      if (request.method === "GET") {
+        const pid = await desktopWidgetPid();
+        return json(response, 200, { available: process.platform === "win32", running: Boolean(pid) });
+      }
+      if (request.method === "POST") {
+        const payload = await bodyJson(request);
+        if (payload.action === "start") {
+          await startDesktopWidget(payload);
+          return json(response, 200, { available: true, running: true });
+        }
+        if (payload.action === "stop") {
+          await stopDesktopWidget();
+          return json(response, 200, { available: process.platform === "win32", running: false });
+        }
+        return json(response, 400, { error: "invalid action" });
+      }
+      return json(response, 405, { error: "method not allowed" });
     }
 
     if (request.method === "GET" && url.pathname === "/api/watch/status") {

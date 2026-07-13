@@ -1,5 +1,5 @@
-const CACHE_NAME = "codex-watch-shell-v10";
-const SHELL_ASSETS = ["/", "/app.js", "/style.css", "/manifest.webmanifest", "/icon.svg"];
+const CACHE_NAME = "codex-watch-shell-v12";
+const SHELL_ASSETS = ["/", "/app.js", "/style.css", "/floating.css", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS)));
